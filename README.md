@@ -53,9 +53,9 @@ class CNPJ < DigitChecksum::BaseDocument
 end
 ```
 
-The example below it's intent to validated brazilian `CNPJ` documents, equivalent to `Corporate Taxpayer Registry Number`, so this can be used as:
+The example below it's intent to validated brazilian `CNPJ` documents, equivalent to `Corporate Taxpayer Registry Number`, so this can be used to:
 
-#### To generate check digits
+#### Calculate check digits
 ```ruby
 # valid format
 CNPJ.calculate_verify_digits("123.456.78/0001") # [9,5]
@@ -64,7 +64,7 @@ CNPJ.calculate_verify_digits("123.456.78/0001") # [9,5]
 CNPJ.calculate_verify_digits("123.456.78/00001") # []
 ```
 
-#### To validate documents numbers
+#### Validate documents numbers
 ```ruby
 # convenience methods to check if document is valid
 
@@ -78,7 +78,7 @@ CNPJ.valid?(12345678000195) # true
 
 ```
 
-#### To normalize and format documents number
+#### Normalize and format documents number
 
 ```ruby
 # belows returns [1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 1, 9, 5]
