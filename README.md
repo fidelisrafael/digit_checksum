@@ -64,7 +64,7 @@ The example below it's intent to validated brazilian `CNPJ` documents, equivalen
 
 #### Generate fake document numbers
 
-```
+```ruby
 CNPJ.generate # "79.552.921/0786-55"
 
 CNPJ.generate(false)  # 85215313606778 -- without pretty formating
