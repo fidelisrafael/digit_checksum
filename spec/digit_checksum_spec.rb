@@ -216,4 +216,20 @@ describe DigitChecksum do
   it 'consider blank document_number as invalid document' do
     expect(FakeDocument.valid?('')).to eq(false)
   end
+
+  it 'must generate valid document numbers' do
+    10.times do
+      generated_doc = FakeDocument.generate
+
+      expect(FakeDocument.valid?(generated_doc)).to eq(true)
+    end
+  end
+
+  it 'must respond to alias methods' do
+    expect(FakeDocument.respond_to?(:stripped)).to eq(true)
+    expect(FakeDocument.respond_to?(:formatted)).to eq(true)
+    expect(FakeDocument.respond_to?(:pretty)).to eq(true)
+    expect(FakeDocument.respond_to?(:normalize_number_to_s)).to eq(true)
+    expect(FakeDocument.respond_to?(:normalize_number)).to eq(true)
+  end
 end

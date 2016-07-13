@@ -13,4 +13,6 @@ class FakeDocument < DigitChecksum::BaseDocument
 
   # pretty formated as XXX.XXX.XXX-XX
   pretty_format_mask %(%s.%s.%s-%s)
+
+  generator_numbers (0..9).to_a
 end

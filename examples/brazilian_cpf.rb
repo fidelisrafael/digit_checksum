@@ -12,7 +12,13 @@ class CPF < DigitChecksum::BaseDocument
   valid_format_regexp %r{(\d{3})[-.]?(\d{3})[-.]?(\d{3})[-.]?(\d{2})}
 
   pretty_format_mask %(%s.%s.%s-%s)
+
+  # numbers sampled to generate new document numbers
+  generator_numbers (0..9).to_a
 end
+
+CPF.generate
+CPF.valid?(CPF.generate)
 
 CPF.valid?(nil) # false
 CPF.valid?(31777259185) # true

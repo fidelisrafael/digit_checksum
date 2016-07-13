@@ -23,9 +23,13 @@ class H4ck < DigitChecksum::BaseDocument
 
   # 0101&&1111(0x01)||[16]<07>!29
   # Ex: 0101&&1111(0x01)||[16]<07>!29-110
-  valid_format_regexp %r{(\d{4})\&\&(\d{4})\(0x(\d{2})\)\|\|\[(\d{2})\]\<(\d{2})\>\!(\d{2})\-(\d{3})}
+  valid_format_regexp %r{(\d{4})(\d{4})\(?[0x]?(\d{2})\)?\|?\|?\[?(\d{2})\]?\<?(\d{2})\>?\!?(\d{2})\-?(\d{3})}
 
-  pretty_format_mask %(%s&&%s(0x%s)||[%s]<%s>!%s-VVV;)
+  # XXXX&&XXXX(0xZZ)||[YY]<MM>!DD-VVV;
+  pretty_format_mask %(%s&&%s(0x%s)||[%s]<%s>!%s-%s;)
+
+  # numbers sampled to generate new document numbers
+  generator_numbers (0..9).to_a
 
   def self.favorite_language(document_number)
     document_number = normalize_document_number(document_number)
@@ -39,6 +43,8 @@ root_doc_number = "0101&&1111(0x01)||[16]<07>!29"
 valid_doc_number = "0101&&1111(0x01)||[16]<07>!29-840"
 invalid_doc_number = "0101&&1111(0x01)||[16]<07>!29-841"
 
+H4ck.generate
+H4ck.valid?(H4ck.generate)
 H4ck.normalize_document_number_to_s(root_doc_number) # "0101111101160729"
 H4ck.calculate_verify_digits(root_doc_number) # [8,4,0]
 H4ck.valid?(root_doc_number) # false

@@ -1,9 +1,9 @@
 # DigitCheckSum
 
 Hi there, I'm glad you're looking in this gem!
-The aim of this gem is to allow **any kind** of document to be validated through calculation of [**Check Digit/Digit Checksum**](https://en.wikipedia.org/wiki/Check_digit).
+The aim of this gem is to allow **any kind** of document to be validated e generated through calculation of [**Check Digit/Digit Checksum**](https://en.wikipedia.org/wiki/Check_digit).
 
-What this mean? This mean that you can validated any kind of documents such: **Passport numbers**, **Federal ID number**, **Books ISBN**, or even **create your own document** number, check `examples/` for more details.
+What this mean? This mean that you can **validate** and **generate fake numbers** of any kind of documents such: **Passport numbers**, **Federal ID number**, **Books ISBN**, or even **create your own document** number, check `examples/` for more details.
 
 **Tip**: Check [`examples/h4ck.rb`](examples/h4ck.rb) to see `h4ck` document specification, this is a sample document who can be manipulated using this library!
 
@@ -29,7 +29,10 @@ Or install it yourself as:
 
 ## Usage
 
-This gem by yourself don't do anything unless you create a class that inherit from `DigitChecksum::BaseDocument` class, example:
+This gem by yourself don't do anything unless you create a class that inherit from `DigitChecksum::BaseDocument` class, but when properly inherited and configured, believe me, you gain **awesomeness**!
+
+Don't you believe me? See for yourself an example:
+
 
 ```ruby
 require 'digit_checksum'
@@ -49,11 +52,25 @@ class CNPJ < DigitChecksum::BaseDocument
   # match format such as: 99.999.999/9999-99 | 99-999-999/9999-99 | 99999999/999999 | 99999999999999
   valid_format_regexp %r{(\d{2})[-.]?(\d{3})[-.]?(\d{3})[\/]?(\d{4})[-.]?(\d{2})}
 
+  # mask utilized to prettify doc number
   pretty_format_mask %(%s.%s.%s/%s-%s)
+
+  # numbers sampled to generate new document numbers
+  generator_numbers (0..9).to_a
 end
 ```
 
 The example below it's intent to validated brazilian `CNPJ` documents, equivalent to `Corporate Taxpayer Registry Number`, so this can be used to:
+
+#### Generate fake document numbers
+
+```
+CNPJ.generate # "79.552.921/0786-55"
+
+CNPJ.generate(false)  # 85215313606778 -- without pretty formating
+
+```
+
 
 #### Calculate check digits
 ```ruby
@@ -82,13 +99,13 @@ CNPJ.valid?(12345678000195) # true
 
 ```ruby
 # belows returns [1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 1, 9, 5]
-CNPJ.normalize_document_number("123.456.78/0001-95") 
+CNPJ.normalize_number("123.456.78/0001-95") 
 
-CNPJ.normalize_document_number_to_s("123.456.78/0001-95") # "12345678000195"
+CNPJ.normalize_number_to_s("123.456.78/0001-95") # "12345678000195"
 
-CNPJ.pretty_formatted("123456780001") # "123.456.78/0001-95"
+CNPJ.pretty_formatted("123456780001") # "123.456.78/0001-95" -- also aliased as CNPJ.pretty(number) or CNPJ.formatted(number)
 
-CNPJ.clear_document_number("123.456.78/0001-95") # "12345678000195"
+CNPJ.clear_number("123.456.78/0001-95") # "12345678000195" -- also aliased as CNPJ.stripped(number)
 ```
 
 See `examples/`for more detailed samples.

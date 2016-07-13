@@ -7,10 +7,20 @@ module DigitChecksum
       :valid_format_regexp,
       :clear_number_regexp,
       :pretty_format_mask,
+      :generator_numbers
     ]
 
     class << self
-      def valid?(document_number, stop = true)
+      def generate(formatted = true)
+        doc_numbers = root_document_digits_count.times.map { get_generator_numbers.sample }
+        doc_numbers.concat(calculate_verify_digits(doc_numbers))
+
+        normalized_number = normalize_number_to_s(doc_numbers)
+
+        formatted ? pretty_formatted(normalized_number) : normalized_number
+      end
+
+      def valid?(document_number)
         # remove all non digits and return an array to be matched with mask
         normalized_document = normalize_document_number(document_number)
 
@@ -130,6 +140,13 @@ module DigitChecksum
       def valid_length?(document_number)
         normalize_document_number(document_number).size == root_document_digits_count + verify_digits_count
       end
+
+      alias :normalize_number_to_s :normalize_document_number_to_s
+      alias :normalize_number :normalize_document_number
+      alias :clear_number :clear_document_number
+      alias :stripped :clear_document_number
+      alias :formatted :pretty_formatted
+      alias :pretty :pretty_formatted
 
       CONSTANTS_MAP.each do |const_identifier|
         define_method "get_#{const_identifier}" do

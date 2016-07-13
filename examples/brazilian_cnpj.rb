@@ -12,8 +12,13 @@ class CNPJ < DigitChecksum::BaseDocument
   valid_format_regexp %r{(\d{2})[-.]?(\d{3})[-.]?(\d{3})[\/]?(\d{4})[-.]?(\d{2})}
 
   pretty_format_mask %(%s.%s.%s/%s-%s)
+
+  # numbers sampled to generate new document numbers
+  generator_numbers (0..9).to_a
 end
 
+CNPJ.generate
+CNPJ.valid?(CNPJ.generate)
 
 CNPJ.valid?(nil) # false
 CNPJ.valid?(69739073000104) # true
