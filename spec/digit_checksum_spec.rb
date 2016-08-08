@@ -165,8 +165,8 @@ describe DigitChecksum do
       set_division_factor_modulo 10
     end
 
-    class FakeDocumentModulo13 < FakeDocument
-      set_division_factor_modulo 13
+    class FakeDocumentModulo7 < FakeDocument
+      set_division_factor_modulo 7
     end
 
     class FakeDocumentModulo3 < FakeDocument
@@ -174,16 +174,16 @@ describe DigitChecksum do
     end
 
     modulo10_verify_digits = FakeDocumentModulo10.calculate_verify_digits(document_number)
-    modulo13_verify_digits = FakeDocumentModulo13.calculate_verify_digits(document_number)
+    modulo13_verify_digits = FakeDocumentModulo7.calculate_verify_digits(document_number)
     modulo3_verify_digits = FakeDocumentModulo3.calculate_verify_digits(document_number)
 
     # in base 10 verify digits will be [0, 5]
-    # in base 13 verify digits will be [11, 3]
-    # in base 3 verify digits will be [0, 0]
+    # in base 13 verify digits will be [7, 4]
+    # in base 3 verify digits will be [3, 3]
 
     expect(modulo10_verify_digits).to eq([0, 5])
-    expect(modulo13_verify_digits).to eq([11, 3])
-    expect(modulo3_verify_digits).to eq([0, 0])
+    expect(modulo13_verify_digits).to eq([7, 4])
+    expect(modulo3_verify_digits).to eq([3, 3])
   end
 
   it 'correctly clear document number based on clear_number_regexp' do

@@ -17,7 +17,7 @@ One of the greatest abilitys of this library is allowing to check digit checksum
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'digit_checksum', '~> 0.2.1'
+gem 'digit_checksum', '~> 0.2.2'
 ```
 
 And then execute:

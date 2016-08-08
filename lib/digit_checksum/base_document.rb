@@ -166,10 +166,12 @@ module DigitChecksum
       end
 
       def digit_verify(quotient_rest, division_factor)
-        # thats the rule, if quotient_rest < 2, so its became 0
-        return 0 if quotient_rest < 2
+        rest = (division_factor - quotient_rest).to_i
 
-        (division_factor - quotient_rest).to_i
+        # if rest has two digits(checkdigit must be a single digit), force 0
+        return 0 if rest >= 10
+
+        rest
       end
 
       def first_verify_mask
