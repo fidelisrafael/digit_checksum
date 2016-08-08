@@ -270,4 +270,8 @@ describe DigitChecksum do
     expect(document_number).to eq(expected)
     expect(MyDocument.valid?(document_number)).to be_truthy
   end
+
+  it 'must generated valid document number for custom check digits positions' do
+    expect(MyDocument.valid?(MyDocument.generate)).to be_truthy
+  end
 end
