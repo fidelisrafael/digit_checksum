@@ -4,6 +4,7 @@ Hi there, I'm glad you're looking in this gem!
 The aim of this gem is to allow **any kind** of document to be validated e generated through calculation of [**Check Digit/Digit Checksum**](https://en.wikipedia.org/wiki/Check_digit).
 
 What this mean? This mean that you can **validate** and **generate fake numbers** of any kind of documents such: **Passport numbers**, **Federal ID number**, **Books ISBN**, or even **create your own document** number, check `examples/` for more details.
+One of the greatest abilitys of this library is allowing to check digit checksum of digits in **ANY POSITION** of the document, not only for the last digits.
 
 **Tip**: Check [`examples/h4ck.rb`](examples/h4ck.rb) to see `h4ck` document specification, this is a sample document who can be manipulated using this library!
 
@@ -14,7 +15,7 @@ What this mean? This mean that you can **validate** and **generate fake numbers*
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'digit_checksum'
+gem 'digit_checksum', '~> 0.2.0'
 ```
 
 And then execute:
@@ -38,25 +39,24 @@ Don't you believe me? See for yourself an example:
 require 'digit_checksum'
 
 class CNPJ < DigitChecksum::BaseDocument
-  # masks that will be used to calculate each check digit
-  digits_verify_mask first:  %w(5 4 3 2 9 8 7 6 5 4 3 2),
-                     second: %w(6 5 4 3 2 9 8 7 6 5 4 3 2)
+  # weights masks that will be used to calculate each check digit
+  set_verify_digits_weights first:  %w(5 4 3 2 9 8 7 6 5 4 3 2),
+                     				second: %w(6 5 4 3 2 9 8 7 6 5 4 3 2)
 
   # remove any non digit from document number
-  # this is the default value, feel free to override
-  clear_number_regexp %r{[^(\d+)]}
+  set_clear_number_regexp %r{[^(\d+)]}
 
   # use modulo 11 as algorithm (can be any value)
-  division_factor_modulo 11
+  set_division_factor_modulo 11
 
   # match format such as: 99.999.999/9999-99 | 99-999-999/9999-99 | 99999999/999999 | 99999999999999
-  valid_format_regexp %r{(\d{2})[-.]?(\d{3})[-.]?(\d{3})[\/]?(\d{4})[-.]?(\d{2})}
+  set_valid_format_regexp %r{(\d{2})[-.]?(\d{3})[-.]?(\d{3})[\/]?(\d{4})[-.]?(\d{2})}
 
   # mask utilized to prettify doc number
-  pretty_format_mask %(%s.%s.%s/%s-%s)
+  set_pretty_format_mask %(%s.%s.%s/%s-%s)
 
   # numbers sampled to generate new document numbers
-  generator_numbers (0..9).to_a
+  set_generator_numbers (0..9).to_a
 end
 ```
 
@@ -67,8 +67,20 @@ The example below it's intent to validated brazilian `CNPJ` documents, equivalen
 ```ruby
 CNPJ.generate # "79.552.921/0786-55"
 
-CNPJ.generate(false)  # 85215313606778 -- without pretty formating
+# without pretty formating
+CNPJ.generate(false)  # 85215313606778
 
+# You can calculate only random root numbers
+root_numbers = CNPJ.generate_root_numbers
+# => [3, 8, 9, 3, 2, 5, 9, 5, 0, 2, 6, 6]
+
+CNPJ.calculate_verify_digits(root_numbers) # [6,7]
+
+# To insert the verify digits in the CORRECT positions
+# Remember: The correct position MAY NOT be the last positions
+# So use `append_verify_digits` to handle this
+CNPJ.pretty(CNPJ.append_verify_digits(root_numbers))
+=> "38.932.595/0266-67"
 ```
 
 
@@ -79,6 +91,21 @@ CNPJ.calculate_verify_digits("123.456.78/0001") # [9,5]
 
 # invalid format
 CNPJ.calculate_verify_digits("123.456.78/00001") # []
+
+CNPJ.pretty(CNPJ.append_verify_digits("123.456.78/0001")) # "123.456.78/0001-95"
+
+document = "123.456.78/0001-95"
+CNPJ.remove_verify_digits!(document)
+# [9,5]
+document
+# => 123456780001
+CNPJ.pretty(CNPJ.append_verify_digits(document))
+# => "12.345.678/0001-95"
+
+# The last two characters position
+CNPJ.obtain_verify_digits_positions
+# => [12, 13]
+
 ```
 
 #### Validate documents numbers
@@ -98,33 +125,90 @@ CNPJ.valid?(12345678000195) # true
 #### Normalize and format documents number
 
 ```ruby
-# belows returns [1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 1, 9, 5]
-CNPJ.normalize_number("123.456.78/0001-95") 
 
-CNPJ.normalize_number_to_s("123.456.78/0001-95") # "12345678000195"
+# Get a array representation of document number
+CNPJ.normalize_number("123.456.78/0001-95")
+# => [1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 1, 9, 5]
 
-CNPJ.pretty_formatted("123456780001") # "123.456.78/0001-95" -- also aliased as CNPJ.pretty(number) or CNPJ.formatted(number)
+# also aliased as CNPJ.pretty_formatted(number) or CNPJ.formatted(number)
+CNPJ.pretty("12345678000195") # "123.456.78/0001-95"
 
-CNPJ.clear_number("123.456.78/0001-95") # "12345678000195" -- also aliased as CNPJ.stripped(number)
+# also aliased as CNPJ.clear_number(number)
+CNPJ.stripped("123.456.78/0001-95")
+# => "12345678000195"
 ```
 
 See `examples/`for more detailed samples.
 
 
+---
+
+### Custom verify digits positions
+
+In **most**(*but not necessarily all*) documents formats the check digits positions are the last characters, but this library also allow you
+to calculate check digits in any position in the middle of the document number, see an example:
+
+```ruby
+class MyDocument < DigitChecksum::BaseDocument
+  set_division_factor_modulo 11
+
+  set_clear_number_regexp %r{[^(\d+)]}
+
+  set_root_documents_digits_count 10
+
+  set_verify_digits_positions [8, 11]
+
+  set_verify_digits_weights first: %w(1 3 4 5 6 7 8 10),
+                            last:  %w(3 2 10 9 8 7 6 5 4 3 2)
+
+  set_valid_format_regexp %r{(\d{3})[-.]?(\d{3})[-.]?(\d{3})[-.]?(\d{3})}
+
+  set_pretty_format_mask %(%s.%s.%s.%s)
+
+  set_generator_numbers (0..9).to_a
+end
+
+MyDocument.obtain_verify_digits_positions # [8, 11]
+# document number without check digits
+MyDocument.calculate_verify_digits("110.042.49.11")
+# => [1, 3]
+document = MyDocument.append_verify_digits("110.042.49.11")
+# => "110042491113"
+MyDocument.pretty(document)
+# => "110.042.491.113"
+MyDocument.remove_verify_digits!(document)
+# => [1, 3]
+document
+# => "1100424911"
+document = MyDocument.append_verify_digits(document)
+# => "110042491113"
+MyDocument.pretty(document)
+# => "110.042.491.113"
+# document number with check digits in the right positions(8, 11)
+MyDocument.valid?("110.042.491.113")
+# => true
+# document number with wrong check digits in the right positions
+MyDocument.valid?("110.042.492.113")
+# => false
+MyDocument.pretty(MyDocument.append_verify_digits("110.042.49.11"))
+# => "110.042.491.113"
+```
+
+---
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`.   
+To install this gem onto your local machine, run `bundle exec rake install`.
 To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/fidelisrafael/digit_checksum.   
+Bug reports and pull requests are welcome on GitHub at https://github.com/fidelisrafael/digit_checksum.
 This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
 
 ## License
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
-

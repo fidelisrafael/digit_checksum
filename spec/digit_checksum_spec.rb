@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'documents/fake_document'
+require 'documents/my_document'
 
 describe DigitChecksum do
   it 'has a version number' do
@@ -40,7 +41,7 @@ describe DigitChecksum do
   it 'calculates digits sum based on mask' do
     document_number = FakeDocument.normalize_document_number('123456789')
 
-    mask = FakeDocument.get_digits_verify_mask[:first]
+    mask = FakeDocument.get_verify_digits_weights[:first]
     sum = FakeDocument.calculate_digits_sum(document_number, mask)
 
     expect(sum).to eq(210.0)
@@ -50,7 +51,7 @@ describe DigitChecksum do
   it 'normalize document number when calculate sum based on mask' do
     document_number = '123456789'
 
-    mask = FakeDocument.get_digits_verify_mask[:first]
+    mask = FakeDocument.get_verify_digits_weights[:first]
     sum = FakeDocument.calculate_digits_sum(document_number, mask)
 
     expect(sum).to eq(210.0)
@@ -61,7 +62,7 @@ describe DigitChecksum do
     document_number = '123456789'
     division_factor = FakeDocument.get_division_factor_modulo
 
-    mask = FakeDocument.get_digits_verify_mask[:first]
+    mask = FakeDocument.get_verify_digits_weights[:first]
 
     data = FakeDocument.calculate_digits_data(document_number, mask, division_factor)
 
@@ -74,7 +75,7 @@ describe DigitChecksum do
 
   it 'calculate each verify digit based on mask' do
     document_number = '123.456.789'
-    masks = FakeDocument.get_digits_verify_mask
+    masks = FakeDocument.get_verify_digits_weights
     division_factor = FakeDocument.get_division_factor_modulo
 
     first_mask = masks[:first]
@@ -130,37 +131,27 @@ describe DigitChecksum do
   it 'must be invalid if document length inst the same of the first verify mask' do
     document_number = '123.456.789-111'
 
-    expect(FakeDocument.correct_length_based_on_first_mask?(document_number)).to eq(false)
-    expect(FakeDocument.valid?(document_number)).to eq(false)
-    expect(FakeDocument.invalid?(document_number)).to eq(true)
+    expect(FakeDocument.correct_length_based_on_first_mask?(document_number)).to be_falsey
+    expect(FakeDocument.valid?(document_number)).to be_falsey
+    expect(FakeDocument.invalid?(document_number)).to be_truthy
   end
-
-  # it 'ignore exceding document numbers when calculating verify digits' do
-  #   document_number = '123.456.789-2000'
-
-  #   verify_digits = FakeDocument.calculate_verify_digits(document_number)
-
-  #   expect(verify_digits).to be_a(Array)
-  #   expect(verify_digits.size).to eq(2)
-  #   expect(verify_digits).to eq([0, 9])
-  # end
 
   it 'correctly validate document number' do
     document_number = '123.456.789-09'
 
-    expect(FakeDocument.valid?(document_number)).to be true
-    expect(FakeDocument.invalid?(document_number)).to be false
+    expect(FakeDocument.valid?(document_number)).to be_truthy
+    expect(FakeDocument.invalid?(document_number)).to be_falsey
   end
 
   it 'correctly mark document number as invalid' do
     document_number = '123.456.789-10'
 
-    expect(FakeDocument.valid?(document_number)).to be false
-    expect(FakeDocument.invalid?(document_number)).to be true
+    expect(FakeDocument.valid?(document_number)).to be_falsey
+    expect(FakeDocument.invalid?(document_number)).to be_truthy
   end
 
-  it 'dinamyc set constants inside document class' do
-    expect(FakeDocument::DIGITS_VERIFY_MASK).to eq(FakeDocument.get_digits_verify_mask)
+  it 'dinamyc set instance veriables inside document class' do
+    expect(FakeDocument::VERIFY_DIGITS_WEIGHTS).to eq(FakeDocument.get_verify_digits_weights)
     expect(FakeDocument::DIVISION_FACTOR_MODULO).to eq(FakeDocument.get_division_factor_modulo)
     expect(FakeDocument::VALID_FORMAT_REGEXP).to eq(FakeDocument.get_valid_format_regexp)
     expect(FakeDocument::CLEAR_NUMBER_REGEXP).to eq(FakeDocument.get_clear_number_regexp)
@@ -170,25 +161,25 @@ describe DigitChecksum do
   it 'allow to use different modulos division to calculate verify digits' do
     document_number = 123456789
 
-    # in base 10 verify digits will be [0, 5]
-    # in base 13 verify digits will be [11, 3]
-    # in base 3 verify digits will be [0, 0]
-
     class FakeDocumentModulo10 < FakeDocument
-      division_factor_modulo 10
+      set_division_factor_modulo 10
     end
 
     class FakeDocumentModulo13 < FakeDocument
-      division_factor_modulo 13
+      set_division_factor_modulo 13
     end
 
     class FakeDocumentModulo3 < FakeDocument
-      division_factor_modulo 3
+      set_division_factor_modulo 3
     end
 
     modulo10_verify_digits = FakeDocumentModulo10.calculate_verify_digits(document_number)
     modulo13_verify_digits = FakeDocumentModulo13.calculate_verify_digits(document_number)
     modulo3_verify_digits = FakeDocumentModulo3.calculate_verify_digits(document_number)
+
+    # in base 10 verify digits will be [0, 5]
+    # in base 13 verify digits will be [11, 3]
+    # in base 3 verify digits will be [0, 0]
 
     expect(modulo10_verify_digits).to eq([0, 5])
     expect(modulo13_verify_digits).to eq([11, 3])
@@ -198,7 +189,7 @@ describe DigitChecksum do
   it 'correctly clear document number based on clear_number_regexp' do
     class CustomDocument < DigitChecksum::BaseDocument
       # keep only letters (this dont make sense, the only purpose is for tests)
-      clear_number_regexp %r{[^(\D+)]}
+      set_clear_number_regexp %r{[^(\D+)]}
     end
 
     document_number = '1A2B3C4D5E6F7G8H9I'
@@ -210,26 +201,73 @@ describe DigitChecksum do
   end
 
   it 'consider nil document_number as invalid document' do
-    expect(FakeDocument.valid?(nil)).to eq(false)
+    expect(FakeDocument.valid?(nil)).to be_falsey
   end
 
   it 'consider blank document_number as invalid document' do
-    expect(FakeDocument.valid?('')).to eq(false)
+    expect(FakeDocument.valid?('')).to be_falsey
   end
 
   it 'must generate valid document numbers' do
     10.times do
       generated_doc = FakeDocument.generate
 
-      expect(FakeDocument.valid?(generated_doc)).to eq(true)
+      expect(FakeDocument.valid?(generated_doc)).to be_truthy
     end
   end
 
   it 'must respond to alias methods' do
-    expect(FakeDocument.respond_to?(:stripped)).to eq(true)
-    expect(FakeDocument.respond_to?(:formatted)).to eq(true)
-    expect(FakeDocument.respond_to?(:pretty)).to eq(true)
-    expect(FakeDocument.respond_to?(:normalize_number_to_s)).to eq(true)
-    expect(FakeDocument.respond_to?(:normalize_number)).to eq(true)
+    expect(FakeDocument.respond_to?(:stripped)).to be_truthy
+    expect(FakeDocument.respond_to?(:formatted)).to be_truthy
+    expect(FakeDocument.respond_to?(:pretty)).to be_truthy
+    expect(FakeDocument.respond_to?(:normalize_number_to_s)).to be_truthy
+    expect(FakeDocument.respond_to?(:normalize_number)).to be_truthy
+  end
+
+  it 'must returns the positions in setup' do
+    positions = MyDocument.obtain_verify_digits_positions # [8, 11]
+
+    expect(positions).to eq([8, 11])
+  end
+
+  it 'must calculate the correct digit based on position' do
+    digits = MyDocument.calculate_verify_digits("110.042.49.11")
+
+    expect(digits).to eq([1,3])
+  end
+
+  it 'must append verify digits in correct position' do
+    document_number = "110.042.49.11"
+
+    digits = MyDocument.calculate_verify_digits(document_number)
+    document = MyDocument.append_verify_digits(document_number)
+
+    positions = MyDocument.obtain_verify_digits_positions
+
+    expect(document[positions[0]]).to eq(digits[0].to_s)
+    expect(document[positions[1]]).to eq(digits[1].to_s)
+  end
+
+  it 'must remove verify digits from passed argument' do
+    document_number = "110.042.491.113"
+    expected = "1100424911"
+
+    MyDocument.remove_verify_digits!(document_number)
+
+    expect(document_number).to eq(expected)
+  end
+
+  it 'must be able to recalculate check digits after removing verify_digits' do
+    document_number = "110.042.491.113"
+    expected = "110042491113"
+
+    digits = MyDocument.calculate_verify_digits(document_number) # [1,3]
+
+    MyDocument.remove_verify_digits!(document_number)
+
+    document_number = MyDocument.append_verify_digits(document_number)
+
+    expect(document_number).to eq(expected)
+    expect(MyDocument.valid?(document_number)).to be_truthy
   end
 end
