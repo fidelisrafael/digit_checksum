@@ -37,8 +37,8 @@ module DigitChecksum
       end
 
       def valid?(document_number)
-        # remove all non digits and return an array to be matched with mask
-        normalized_document = normalize_document_number(document_number)
+        # remove all non digits and return an string to be matched with mask
+        normalized_document = normalize_number_to_s(document_number)
 
         # if document is empty
         return false if normalized_document.nil? || normalized_document.empty?
@@ -56,7 +56,7 @@ module DigitChecksum
       end
 
       def remove_verify_digits!(document_number)
-        document_number.to_s.gsub!(get_clear_number_regexp, '')
+        document_number.gsub!(get_clear_number_regexp, '')
 
         obtain_verify_digits_positions.each_with_index.flat_map {|position, index|
           document_number.slice!((position - index), 1)
