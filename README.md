@@ -1,5 +1,7 @@
 # DigitCheckSum
 
+[![Build Status](https://travis-ci.org/fidelisrafael/digit_checksum.svg)](https://travis-ci.org/fidelisrafael/digit_checksum)
+
 Hi there, I'm glad you're looking in this gem!
 The aim of this gem is to allow **any kind** of document to be validated e generated through calculation of [**Check Digit/Digit Checksum**](https://en.wikipedia.org/wiki/Check_digit).
 
