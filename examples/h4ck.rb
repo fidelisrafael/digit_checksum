@@ -12,24 +12,24 @@ class H4ck < DigitChecksum::BaseDocument
 
   PROGRAMMINGS_LANGUAGES.default = 'Unknown'
 
-  division_factor_modulo 11
+  set_division_factor_modulo 11
 
-  digits_verify_mask first:  %w(17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2),
-                     second: %w(18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2),
-                     last:   %w(19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2)
+  set_verify_digits_weights first:  %w(17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2),
+                            second: %w(18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2),
+                            last:   %w(19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2)
 
   # remove any non digit and 0x character from document number
-  clear_number_regexp %r{(0x)|[^\d+]}
+  set_clear_number_regexp %r{(0x)|[^\d+]}
 
   # 0101&&1111(0x01)||[16]<07>!29
   # Ex: 0101&&1111(0x01)||[16]<07>!29-110
-  valid_format_regexp %r{(\d{4})(\d{4})\(?[0x]?(\d{2})\)?\|?\|?\[?(\d{2})\]?\<?(\d{2})\>?\!?(\d{2})\-?(\d{3})}
+  set_valid_format_regexp %r{(\d{4})(\d{4})\(?[0x]?(\d{2})\)?\|?\|?\[?(\d{2})\]?\<?(\d{2})\>?\!?(\d{2})\-?(\d{3})}
 
   # XXXX&&XXXX(0xZZ)||[YY]<MM>!DD-VVV;
-  pretty_format_mask %(%s&&%s(0x%s)||[%s]<%s>!%s-%s;)
+  set_pretty_format_mask %(%s&&%s(0x%s)||[%s]<%s>!%s-%s;)
 
   # numbers sampled to generate new document numbers
-  generator_numbers (0..9).to_a
+  set_generator_numbers (0..9).to_a
 
   def self.favorite_language(document_number)
     document_number = normalize_document_number(document_number)
