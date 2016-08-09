@@ -6,10 +6,10 @@ class FakeDocument < DigitChecksum::BaseDocument
   set_clear_number_regexp %r{[^(\d+)]}
 
   # MOD 11
-  set_division_factor_modulo 11
+  set_division_modulo 11
 
   # match format such as: XXX.XXX.XXX-XX | XXX-XXX-XXX-XX | XXXXXXXXX-XX | XXXXXXXXXXX
-  set_valid_format_regexp %r{(\d{3})[-.]?(\d{3})[-.]?(\d{3})[-.]?(\d{2})}
+  set_format_regexp %r{(\d{3})[-.]?(\d{3})[-.]?(\d{3})[-.]?(\d{2})}
 
   # pretty formated as XXX.XXX.XXX-XX
   set_pretty_format_mask %(%s.%s.%s-%s)
