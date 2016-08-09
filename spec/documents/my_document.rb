@@ -4,7 +4,7 @@ class MyDocument < DigitChecksum::BaseDocument
 
   set_clear_number_regexp %r{[^(\d+)]}
 
-  set_root_numbers_count 10
+  set_root_digits_count 10
 
   set_verify_digits_positions [8, 11]
 

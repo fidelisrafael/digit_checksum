@@ -22,7 +22,7 @@ describe DigitChecksum do
     number = '123.456.789-10'
     expected_stripped = '12345678910'
 
-    stripped_number = FakeDocument.stripped(number)
+    stripped_number = FakeDocument.strip(number)
 
     expect(stripped_number).to eq(expected_stripped)
     expect(stripped_number).to be_a(String)
@@ -69,7 +69,7 @@ describe DigitChecksum do
     expect(data.size).to eq(4)
     expect(data[:sum]).to eq(210.0)
     expect(data[:rest]).to eq(1.0)
-    expect(data[:verify_digit]).to eq(0)
+    expect(data[:digit]).to eq(0)
   end
 
   it 'calculate each verify digit based on mask' do
@@ -94,7 +94,7 @@ describe DigitChecksum do
   it 'calculates all verify digits for document' do
     number = '123.456.789'
 
-    verify_digits = FakeDocument.verify_digits(number)
+    verify_digits = FakeDocument.calculate_verify_digits(number)
 
     expect(verify_digits).to be_a(Array)
     expect(verify_digits).to eq([0, 9])
@@ -106,7 +106,7 @@ describe DigitChecksum do
   it 'calculates all verify digits for normalized document' do
     number = FakeDocument.normalize('123.456.789')
 
-    verify_digits = FakeDocument.verify_digits(number)
+    verify_digits = FakeDocument.calculate_verify_digits(number)
 
     expect(verify_digits).to be_a(Array)
     expect(verify_digits.size).to eq(2)
@@ -130,7 +130,7 @@ describe DigitChecksum do
   it 'must be invalid if document length inst the same of the first verify mask' do
     number = '123.456.789-111'
 
-    expect(FakeDocument.correct_length_based_on_first_mask?(number)).to be_falsey
+    expect(FakeDocument.valid_length?(number)).to be_falsey
     expect(FakeDocument.valid?(number)).to be_falsey
     expect(FakeDocument.invalid?(number)).to be_truthy
   end
@@ -172,9 +172,9 @@ describe DigitChecksum do
       set_division_modulo 3
     end
 
-    modulo10_verify_digits = FakeDocumentModulo10.verify_digits(number)
-    modulo13_verify_digits = FakeDocumentModulo7.verify_digits(number)
-    modulo3_verify_digits = FakeDocumentModulo3.verify_digits(number)
+    modulo10_verify_digits = FakeDocumentModulo10.calculate_verify_digits(number)
+    modulo13_verify_digits = FakeDocumentModulo7.calculate_verify_digits(number)
+    modulo3_verify_digits = FakeDocumentModulo3.calculate_verify_digits(number)
 
     # in base 10 verify digits will be [0, 5]
     # in base 13 verify digits will be [7, 4]
@@ -194,7 +194,7 @@ describe DigitChecksum do
     number = '1A2B3C4D5E6F7G8H9I'
     expected_cleared = 'ABCDEFGHI'
 
-    cleared_number = CustomDocument.stripped(number)
+    cleared_number = CustomDocument.strip(number)
 
     expect(cleared_number).to eq(expected_cleared)
   end
@@ -217,18 +217,18 @@ describe DigitChecksum do
 
   it 'must respond to alias methods' do
     expect(FakeDocument.respond_to?(:as_array)).to be_truthy
-    expect(FakeDocument.respond_to?(:cleared)).to be_truthy
+    expect(FakeDocument.respond_to?(:clear)).to be_truthy
     expect(FakeDocument.respond_to?(:formatted)).to be_truthy
   end
 
   it 'must returns the positions in setup' do
-    positions = MyDocument.obtain_verify_digits_positions # [8, 11]
+    positions = MyDocument.get_verify_digits_positions # [8, 11]
 
     expect(positions).to eq([8, 11])
   end
 
   it 'must calculate the correct digit based on position' do
-    digits = MyDocument.verify_digits("110.042.49.11")
+    digits = MyDocument.calculate_verify_digits("110.042.49.11")
 
     expect(digits).to eq([1,3])
   end
@@ -236,10 +236,10 @@ describe DigitChecksum do
   it 'must append verify digits in correct position' do
     number = "110.042.49.11"
 
-    digits = MyDocument.verify_digits(number)
-    document = MyDocument.append_verify_digits(number)
+    digits = MyDocument.calculate_verify_digits(number)
+    document = MyDocument.new(number).append_verify_digits!
 
-    positions = MyDocument.obtain_verify_digits_positions
+    positions = MyDocument.get_verify_digits_positions
 
     expect(document[positions[0]]).to eq(digits[0].to_s)
     expect(document[positions[1]]).to eq(digits[1].to_s)
@@ -247,28 +247,50 @@ describe DigitChecksum do
 
   it 'must remove verify digits from passed argument' do
     number = "110.042.491.113"
-    expected = "1100424911"
+    expected = [1,3]
 
-    MyDocument.remove_verify_digits!(number)
-
-    expect(number).to eq(expected)
+    expect(MyDocument.remove_verify_digits!(number)).to eq(expected)
   end
 
   it 'must be able to recalculate check digits after removing verify_digits' do
     number = "110.042.491.113"
     expected = "110042491113"
 
-    digits = MyDocument.verify_digits(number) # [1,3]
+    document = MyDocument.new(number)
 
-    MyDocument.remove_verify_digits!(number)
+    digits = document.calculate_verify_digits # [1,3]
 
-    number = MyDocument.append_verify_digits(number)
+    removed_digits = document.remove_verify_digits!
 
-    expect(number).to eq(expected)
+    document.append_verify_digits!
+
+    expect(document.number).to eq(expected)
+    expect(digits).to eq([1,3])
+    expect(removed_digits).to eq([1,3])
+    expect(document.current_verify_digits).to eq([1,3])
     expect(MyDocument.valid?(number)).to be_truthy
   end
 
   it 'must generated valid document number for custom check digits positions' do
     expect(MyDocument.valid?(MyDocument.generate)).to be_truthy
+  end
+
+  it 'must delegate class methods calls to object instance method call' do
+    number = '123.456.789-09'
+
+    FakeDocument.valid?(number)    == FakeDocument.new(number).valid?
+    FakeDocument.invalid?(number)  == FakeDocument.new(number).invalid?
+    FakeDocument.pretty(number)    == FakeDocument.new(number).pretty
+    FakeDocument.formatted(number) == FakeDocument.new(number).formatted
+    FakeDocument.normalize(number) == FakeDocument.new(number).normalize
+    FakeDocument.as_array(number)  == FakeDocument.new(number).as_array
+    FakeDocument.strip(number)     == FakeDocument.new(number).strip
+    FakeDocument.clear(number)     == FakeDocument.new(number).clear
+
+    FakeDocument.remove_verify_digits!(number)   == FakeDocument.new(number).remove_verify_digits!
+    FakeDocument.append_verify_digits!(number)   == FakeDocument.new(number).append_verify_digits!
+    FakeDocument.calculate_verify_digits(number) == FakeDocument.new(number).calculate_verify_digits
+
+    FakeDocument.valid_length?(number)  == FakeDocument.new(number).valid_length?
   end
 end
