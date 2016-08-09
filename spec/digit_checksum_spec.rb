@@ -245,6 +245,26 @@ describe DigitChecksum do
     expect(document[positions[1]]).to eq(digits[1].to_s)
   end
 
+  it 'not allow appending verify digits twice' do
+    number = "110.042.49.11"
+    expected = "110042491113"
+
+    document = MyDocument.new(number)
+    10.times { document.append_verify_digits! }
+
+    expect(document.number).to eq(expected)
+  end
+
+  it 'must not remove another digits besides verify digits' do
+    number = "110.042.491.113"
+    expected = "1100424911"
+
+    document = MyDocument.new(number)
+    10.times { document.remove_verify_digits! }
+
+    expect(document.number).to eq(expected)
+  end
+
   it 'must remove verify digits from passed argument' do
     number = "110.042.491.113"
     expected = [1,3]

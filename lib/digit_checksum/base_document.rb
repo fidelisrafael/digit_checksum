@@ -51,18 +51,18 @@ module DigitChecksum
     end
 
     def valid_length?
-      length == full_number_length
+      size == full_size
     end
 
-    def full_number_length
+    def full_size
       (root_digits_count + verify_digits_count)
     end
 
-    def length
+    def size
       normalize.length
     end
 
-    alias :size :length
+    alias :length :size
 
     def current_verify_digits
       remove_verify_digits(@number.dup)
@@ -93,15 +93,16 @@ module DigitChecksum
     end
 
     def append_verify_digits!
-      # return @number if current_verify_digits.size == verify_digits_counta
-
       digits = calculate_verify_digits
-      @number = normalize
 
-      verify_digits_positions.each_with_index.flat_map {|position, index|
-        # position + index
-        @number.insert(position, digits.shift)
-      }
+      if (!valid_length? && digits != current_verify_digits)
+        @number = normalize
+
+        verify_digits_positions.each_with_index.flat_map {|position, index|
+          # position + index
+          @number.insert(position, digits.shift)
+        }
+      end
 
       @number = stripped(@number)
     end
@@ -156,6 +157,8 @@ module DigitChecksum
     end
 
     def remove_verify_digits(number)
+      return [] unless number.size == full_size
+
       verify_digits_positions.each_with_index.flat_map {|position, index|
         number.slice!(position - index, 1)
       }.map(&:to_i)
@@ -164,7 +167,7 @@ module DigitChecksum
     def without_verify_digits(number)
       number = normalized(number)
 
-      return number unless number.length == full_number_length
+      return number unless number.size == full_size
 
       remove_verify_digits(number) and number
     end
