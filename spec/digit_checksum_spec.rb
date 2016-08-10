@@ -63,13 +63,12 @@ describe DigitChecksum do
     division_modulo = FakeDocument.get_division_modulo
 
     weights = FakeDocument.get_verify_digits_weights[:first]
-    data = FakeDocument.calculate_digits_data(number, weights, division_modulo)
+    data = FakeDocument.calculate_digits_data(number, weights)
 
     expect(data).to be_a(Hash)
-    expect(data.size).to eq(4)
+    expect(data.size).to eq(3)
     expect(data[:sum]).to eq(210.0)
     expect(data[:rest]).to eq(1.0)
-    expect(data[:digit]).to eq(0)
   end
 
   it 'calculate each verify digit based on mask' do
@@ -80,9 +79,9 @@ describe DigitChecksum do
     first_weights = weights[:first]
     second_weights = weights[:second]
 
-    first_digit = FakeDocument.calculate_verify_digit(number, first_weights, division_modulo)
+    first_digit = FakeDocument.calculate_verify_digit(number, first_weights)
     number << first_digit.to_s
-    second_digit = FakeDocument.calculate_verify_digit(number, second_weights, division_modulo)
+    second_digit = FakeDocument.calculate_verify_digit(number, second_weights)
     number << second_digit.to_s
 
     expect(first_digit).to eq(0)

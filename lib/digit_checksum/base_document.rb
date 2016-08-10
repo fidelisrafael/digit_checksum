@@ -73,11 +73,13 @@ module DigitChecksum
       digits = []
       digits_positions = verify_digits_positions.dup
 
-      get_verify_digits_weights.each_with_index do |data, index|
-        position, mask = *data
+      return [] unless number.size == root_digits_count
 
-        current_number = normalized(number, mask.size)
-        verify_digit = calculate_verify_digit(current_number, mask)
+      get_verify_digits_weights.each_with_index do |data, index|
+        position, weights = *data
+
+        current_number = normalized(number, weights.size)
+        verify_digit = calculate_verify_digit(current_number, weights)
 
         # just update ref to calculate next digit
         number.insert((digits_positions.shift + index), verify_digit)
@@ -176,8 +178,39 @@ module DigitChecksum
       verify_digits_count.times.map {|i| root_digits_count + i  }
     end
 
-    def calculate_verify_digit(current_number, mask)
-      self.class.calculate_verify_digit(current_number, mask, get_division_modulo)
+    def calculate_verify_digit(number, weights)
+      data = calculate_digits_data(number, weights)
+
+      calc_verify_digit(data[:rest])
+    end
+
+    def calculate_digits_data(number, weights)
+      sum = reduce_digits_weights(number, weights)
+      quotient = (sum / get_division_modulo)
+      rest = calculate_rest(sum, quotient)
+
+      { sum: sum, quotient: quotient, rest: rest }
+    end
+
+    def reduce_digits_weights(number, weights)
+      number = normalized(number)
+
+      number.each_with_index.map {|n,i|
+        n.to_i * weights[i].to_i
+      }.reduce(:+).to_f
+    end
+
+    def calculate_rest(sum, quotient)
+      (sum % get_division_modulo)
+    end
+
+    def calc_verify_digit(quotient_rest)
+      rest = (get_division_modulo - quotient_rest).to_i
+
+      # if rest has two digits(checkdigit must be a single digit), force 0
+      return 0 if rest >= 10
+
+      rest
     end
 
   end
