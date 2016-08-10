@@ -21,15 +21,5 @@ module DigitChecksum
         new(number).public_send(method_name)
       end
     end
-
-    class << self
-      def method_missing(method, *args)
-        object = self.new('')
-
-        return object.send(method, *args) if object.respond_to?(method, true)
-
-        super(method, *args)
-      end
-    end
   end
 end

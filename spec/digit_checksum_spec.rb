@@ -42,7 +42,7 @@ describe DigitChecksum do
     number = FakeDocument.normalize('123456789')
 
     weights = FakeDocument.get_verify_digits_weights[:first]
-    sum = FakeDocument.reduce_digits_weights(number, weights)
+    sum = FakeDocument.new(number).send(:reduce_digits_weights, number, weights)
 
     expect(sum).to eq(210.0)
     expect(sum).to be_a(Float)
@@ -52,7 +52,7 @@ describe DigitChecksum do
     number = '123456789'
 
     weights = FakeDocument.get_verify_digits_weights[:first]
-    sum = FakeDocument.reduce_digits_weights(number, weights)
+    sum = FakeDocument.new(number).send(:reduce_digits_weights, number, weights)
 
     expect(sum).to eq(210.0)
     expect(sum).to be_a(Float)
@@ -63,7 +63,7 @@ describe DigitChecksum do
     division_modulo = FakeDocument.get_division_modulo
 
     weights = FakeDocument.get_verify_digits_weights[:first]
-    data = FakeDocument.calculate_digits_data(number, weights)
+    data = FakeDocument.new(number).send(:calculate_digits_data, number, weights)
 
     expect(data).to be_a(Hash)
     expect(data.size).to eq(3)
@@ -79,9 +79,9 @@ describe DigitChecksum do
     first_weights = weights[:first]
     second_weights = weights[:second]
 
-    first_digit = FakeDocument.calculate_verify_digit(number, first_weights)
+    first_digit = FakeDocument.new(number).send(:calculate_verify_digit, number, first_weights)
     number << first_digit.to_s
-    second_digit = FakeDocument.calculate_verify_digit(number, second_weights)
+    second_digit = FakeDocument.new(number).send(:calculate_verify_digit, number, second_weights)
     number << second_digit.to_s
 
     expect(first_digit).to eq(0)
