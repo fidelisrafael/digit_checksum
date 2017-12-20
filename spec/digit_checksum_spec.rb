@@ -297,19 +297,22 @@ describe DigitChecksum do
   it 'must delegate class methods calls to object instance method call' do
     number = '123.456.789-09'
 
-    FakeDocument.valid?(number)    == FakeDocument.new(number).valid?
-    FakeDocument.invalid?(number)  == FakeDocument.new(number).invalid?
-    FakeDocument.pretty(number)    == FakeDocument.new(number).pretty
-    FakeDocument.formatted(number) == FakeDocument.new(number).formatted
-    FakeDocument.normalize(number) == FakeDocument.new(number).normalize
-    FakeDocument.as_array(number)  == FakeDocument.new(number).as_array
-    FakeDocument.strip(number)     == FakeDocument.new(number).strip
-    FakeDocument.clear(number)     == FakeDocument.new(number).clear
+    document = FakeDocument.new(number)
 
-    FakeDocument.remove_verify_digits!(number)   == FakeDocument.new(number).remove_verify_digits!
-    FakeDocument.append_verify_digits!(number)   == FakeDocument.new(number).append_verify_digits!
-    FakeDocument.calculate_verify_digits(number) == FakeDocument.new(number).calculate_verify_digits
+    expect(FakeDocument.valid?(number)).to eq(document.valid?)
+    expect(FakeDocument.invalid?(number)).to eq(document.invalid?)
+    expect(FakeDocument.pretty(number)).to eq(document.pretty)
+    expect(FakeDocument.formatted(number)).to eq(document.formatted)
+    expect(FakeDocument.normalize(number)).to eq(document.normalize)
+    expect(FakeDocument.as_array(number)).to eq(document.as_array)
+    expect(FakeDocument.strip(number)).to eq(document.strip)
+    expect(FakeDocument.clear(number)).to eq(document.clear)
+    expect(FakeDocument.valid_length?(number)).to eq(document.valid_length?)
 
-    FakeDocument.valid_length?(number)  == FakeDocument.new(number).valid_length?
+    ## Destructive methods (will change `document`)
+
+    expect(FakeDocument.remove_verify_digits!(number)).to eq(FakeDocument.new(number).remove_verify_digits!)
+    expect(FakeDocument.append_verify_digits!(number)).to eq(FakeDocument.new(number).append_verify_digits!)
+    expect(FakeDocument.calculate_verify_digits(number)).to eq(document.calculate_verify_digits)
   end
 end
